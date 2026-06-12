@@ -3,374 +3,311 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RapiBoost</title>
+<title>RapiBoost - Real Action</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body{
-  background:#0f172a;
-  color:white;
-  font-family:Arial;
-  text-align:center;
-  padding:20px;
+body {
+  background: #0f172a;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 20px;
 }
-.box{
-  background:#1e293b;
-  padding:20px;
-  border-radius:12px;
-  max-width:450px;
-  margin:auto;
+.box {
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 450px;
+  margin: auto;
 }
-input,button{
-  width:90%;
-  padding:12px;
-  margin:8px;
-  border:none;
-  border-radius:8px;
+input, select, button {
+  width: 90%;
+  padding: 12px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 8px;
+  box-sizing: border-box;
 }
-.task{
-  background:#334155;
-  margin-top:10px;
-  padding:12px;
-  border-radius:10px;
+button {
+  background: #3b82f6;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
 }
+button:disabled {
+  background: #475569;
+  cursor: not-allowed;
+}
+.task {
+  background: #334155;
+  margin-top: 15px;
+  padding: 15px;
+  border-radius: 10px;
+  text-align: left;
+}
+.task h4 { margin: 0 0 10px 0; color: #38bdf8; }
+.task p { margin: 5px 0; font-size: 14px; }
+.link-action {
+  display: inline-block;
+  background: #10b981;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+hr { border-color: #475569; border-style: solid; }
 </style>
 </head>
 
 <body>
 
 <div id="loginBox">
-
-<h1>🚀 RapiBoost</h1>
-
-<div class="box">
-
-<input id="username" placeholder="Username">
-
-<input id="referral" placeholder="Kode referral (opsional)">
-
-<button onclick="registerUser()">Register</button>
-
-<button onclick="loginUser()">Login</button>
-
-<p id="status"></p>
-
+  <h1>🚀 RapiBoost</h1>
+  <div class="box">
+    <input id="username" placeholder="Username">
+    <input id="referral" placeholder="Kode referral (opsional)">
+    <button onclick="registerUser()">Register</button>
+    <button onclick="loginUser()">Login</button>
+    <p id="status"></p>
+  </div>
 </div>
-
-</div>
-
 
 <div id="dashboard" style="display:none;">
+  <div class="box">
+    <h2>Dashboard</h2>
+    <p>👤 <span id="currentUser"></span></p>
+    <p>🪙 Coin: <span id="coinShow" style="font-weight:bold; color:#fbbf24;"></span></p>
+    <p>🎁 Referral: <span id="myRef"></span></p>
+    
+    <hr>
+    
+    <h3>Buat Campaign</h3>
+    <select id="platformInput">
+      <option value="TikTok">TikTok</option>
+      <option value="Instagram">Instagram</option>
+      <option value="YouTube">YouTube</option>
+    </select>
+    
+    <select id="missionInput">
+      <option value="Followers">Followers / Subscribe</option>
+      <option value="Likes">Likes</option>
+      <option value="Comment">Comment</option>
+    </select>
 
-<h2>Dashboard</h2>
+    <input id="linkInput" placeholder="Link asli (Contoh: https://tiktok.com/@raffi)">
+    <input id="targetInput" type="number" placeholder="Jumlah target">
+    
+    <button onclick="createCampaign()">Submit Campaign</button>
+  </div>
 
-<p>👤 <span id="currentUser"></span></p>
-
-<p>🪙 Coin: <span id="coinShow"></span></p>
-
-<p>🎁 Referral: <span id="myRef"></span></p>
-
-<hr>
-
-<h3>Buat Campaign</h3>
-
-<input id="accountInput" placeholder="@username">
-
-<input id="targetInput" placeholder="Jumlah followers">
-
-<button onclick="createCampaign()">
-Submit Campaign
-</button>
-
-<hr>
-
-<h3>Task Tersedia</h3>
-
-<div id="taskList"></div>
-
+  <div style="max-width:450px; margin:auto; margin-top:20px;">
+    <h3>Task Tersedia</h3>
+    <div id="taskList"></div>
+  </div>
 </div>
 
-
 <script>
+/* ================= CONFIGURATION ================= */
+const SUPABASE_URL = "https://kbjevwmihxlgcarhyvje.supabase.co";
+const SUPABASE_KEY = "sb_publishable_aFgPoAkjq2aY_mwk94hQqw_cP5iYb7D";
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* CONFIG */
-const SUPABASE_URL =
-"https://kbjevwmihxlgcarhyvje.supabase.co";
+// WAJIB GANTI DENGAN API KEY DARI api.imgbb.com
+const IMGBB_KEY = "MASUKKAN_API_KEY_IMGBB_DISINI"; 
 
-const SUPABASE_KEY =
-"sb_publishable_aFgPoAkjq2aY_mwk94hQqw_cP5iYb7D";
+let loggedUser = "";
 
-const db = supabase.createClient(
-SUPABASE_URL,
-SUPABASE_KEY
-);
-
-let loggedUser="";
-
-
-function makeRef(){
- return "REF" + Math.floor(Math.random()*99999);
+function makeRef() {
+  return "REF" + Math.floor(Math.random() * 99999);
 }
 
+/* ================= AUTHENTICATION ================= */
+async function registerUser() {
+  let username = document.getElementById("username").value;
+  let referral = document.getElementById("referral").value;
+  let myRef = makeRef();
 
-/* REGISTER */
-async function registerUser(){
+  let { error } = await db.from("users").insert([
+    { username: username, coin: 1, refcode: myRef, referred_by: referral || null }
+  ]);
 
- let username =
- document.getElementById("username").value;
+  if(error) {
+    document.getElementById("status").innerText = error.message;
+    return;
+  }
 
- let referral =
- document.getElementById("referral").value;
-
- let myRef = makeRef();
-
- let { error } =
- await db.from("users").insert([
-   {
-     username:username,
-     coin:1,
-     refcode:myRef,
-     referred_by:referral || null
-   }
- ]);
-
- if(error){
-   document.getElementById("status").innerText =
-   error.message;
-   return;
- }
-
- if(referral){
-
-   let { data } =
-   await db.from("users")
-   .select("*")
-   .eq("refcode", referral);
-
-   if(data.length>0){
-
-     let oldCoin = data[0].coin;
-
-     await db.from("users")
-     .update({
-       coin: oldCoin+5
-     })
-     .eq("refcode", referral);
-
-   }
-
- }
-
- document.getElementById("status").innerText =
- "Register berhasil";
+  if(referral) {
+    let { data } = await db.from("users").select("*").eq("refcode", referral);
+    if(data.length > 0) {
+      let oldCoin = data[0].coin;
+      await db.from("users").update({ coin: oldCoin + 5 }).eq("refcode", referral);
+    }
+  }
+  document.getElementById("status").innerText = "Register berhasil. Silakan Login.";
 }
 
+async function loginUser() {
+  let username = document.getElementById("username").value;
+  let { data } = await db.from("users").select("*").eq("username", username);
 
-/* LOGIN */
-async function loginUser(){
+  if(data.length == 0) {
+    document.getElementById("status").innerText = "User tidak ditemukan";
+    return;
+  }
 
- let username =
- document.getElementById("username").value;
+  loggedUser = username;
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("dashboard").style.display = "block";
+  document.getElementById("currentUser").innerText = username;
+  document.getElementById("coinShow").innerText = data[0].coin;
+  document.getElementById("myRef").innerText = data[0].refcode;
 
- let { data } =
- await db.from("users")
- .select("*")
- .eq("username", username);
-
- if(data.length==0){
-
-   document.getElementById("status").innerText =
-   "User tidak ditemukan";
-
-   return;
- }
-
- loggedUser = username;
-
- document.getElementById("loginBox")
- .style.display="none";
-
- document.getElementById("dashboard")
- .style.display="block";
-
- document.getElementById("currentUser")
- .innerText = username;
-
- document.getElementById("coinShow")
- .innerText = data[0].coin;
-
- document.getElementById("myRef")
- .innerText = data[0].refcode;
-
- loadTasks();
+  loadTasks();
 }
 
+/* ================= CAMPAIGN MANAGEMENT ================= */
+async function createCampaign() {
+  let platform = document.getElementById("platformInput").value;
+  let mission = document.getElementById("missionInput").value;
+  let link = document.getElementById("linkInput").value;
+  let target = parseInt(document.getElementById("targetInput").value);
 
-/* CREATE CAMPAIGN */
-async function createCampaign(){
+  if(!link || !target) {
+    alert("Harap isi link dan target!");
+    return;
+  }
 
- let account =
- document.getElementById("accountInput").value;
+  const { error } = await db.from("campaigns").insert([
+    {
+      username: loggedUser,
+      platform: platform,
+      mission_type: mission,
+      link: link,
+      target: target
+    }
+  ]);
 
- let target =
- parseInt(
- document.getElementById("targetInput").value
- );
-
- await db.from("campaigns").insert([
-   {
-     username:loggedUser,
-     account:account,
-     target:target
-   }
- ]);
-
- alert("Campaign dibuat");
-
- loadTasks();
+  if(error) {
+    alert("Error: " + error.message);
+  } else {
+    alert("Campaign berhasil dibuat!");
+    document.getElementById("linkInput").value = "";
+    document.getElementById("targetInput").value = "";
+    loadTasks();
+  }
 }
 
+async function loadTasks() {
+  let { data } = await db.from("campaigns").select("*");
+  let html = "";
 
-/* LOAD TASK */
-async function loadTasks(){
+  for(let item of data) {
+    if(item.username != loggedUser) {
+      let { data: done } = await db.from("task_done")
+        .select("*")
+        .eq("username", loggedUser)
+        .eq("campaign_id", item.id);
 
- let { data } =
- await db.from("campaigns")
- .select("*");
-
- let html="";
-
- for(let item of data){
-
-   if(item.username!=loggedUser){
-
-     let { data:done } =
-     await db.from("task_done")
-     .select("*")
-     .eq("username",loggedUser)
-     .eq("campaign_id",item.id);
-
-     if(done.length>0){
-
-       html += `
-
-       <div class="task">
-
-       <p>Follow ${item.account}</p>
-
-       <p>Sisa Target: ${item.target}</p>
-
-       <button disabled>
-       Sudah Dikerjakan
-       </button>
-
-       </div>
-
-       `;
-
-     } else {
-
-       html += `
-
-       <div class="task">
-
-       <p>Follow ${item.account}</p>
-
-       <p>Sisa Target: ${item.target}</p>
-
-       <button onclick="doTask(${item.id})">
-       Sudah Follow (+1 Coin)
-       </button>
-
-       </div>
-
-       `;
-     }
-
-   }
-
- }
-
- document.getElementById("taskList")
- .innerHTML = html;
+      if(done.length > 0) {
+        html += `
+          <div class="task" style="opacity: 0.6;">
+            <h4>${item.platform} - ${item.mission_type}</h4>
+            <p>Sisa Target: ${item.target}</p>
+            <button disabled>Sudah Dikerjakan</button>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="task">
+            <h4>${item.platform} - ${item.mission_type}</h4>
+            <p>Target Misi: <strong>${item.target} tersisa</strong></p>
+            
+            <a href="${item.link}" target="_blank" class="link-action">1. Buka Link & Kerjakan</a>
+            
+            <hr>
+            
+            <p style="font-size:13px; margin-bottom:5px;">2. Upload Bukti Screenshot:</p>
+            <input type="file" id="file_${item.id}" accept="image/png, image/jpeg" style="background:#1e293b; color:white;">
+            <p id="status_${item.id}" style="font-size:12px; color:#fbbf24; margin:5px 0;"></p>
+            
+            <button id="btn_${item.id}" onclick="submitTask(${item.id})">3. Kirim Bukti (+1 Coin)</button>
+          </div>
+        `;
+      }
+    }
+  }
+  document.getElementById("taskList").innerHTML = html;
 }
 
+/* ================= UPLOAD & VERIFY TASK ================= */
+async function submitTask(campaignId) {
+  const fileInput = document.getElementById(`file_${campaignId}`);
+  const statusTxt = document.getElementById(`status_${campaignId}`);
+  const btnSubmit = document.getElementById(`btn_${campaignId}`);
 
-/* KERJAKAN TASK */
-async function doTask(campaignId){
+  const file = fileInput.files[0];
+  if(!file) {
+    alert("Harap pilih gambar bukti terlebih dahulu!");
+    return;
+  }
 
- let { data:done } =
- await db.from("task_done")
- .select("*")
- .eq("username",loggedUser)
- .eq("campaign_id",campaignId);
+  // 1. Proses Upload ke ImgBB
+  btnSubmit.disabled = true;
+  statusTxt.innerText = "⏳ Mengunggah gambar ke server...";
 
- if(done.length>0){
-   alert("Task sudah pernah dikerjakan");
-   return;
- }
+  const formData = new FormData();
+  formData.append("image", file);
 
- /* simpan history */
+  try {
+    const uploadRes = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
+      method: "POST",
+      body: formData
+    });
+    const uploadData = await uploadRes.json();
 
- await db.from("task_done").insert([
-   {
-     username:loggedUser,
-     campaign_id:campaignId
-   }
- ]);
+    if(!uploadData.success) {
+      throw new Error("Gagal mengunggah gambar ke ImgBB");
+    }
 
- /* tambah coin */
+    const proofUrl = uploadData.data.url;
+    statusTxt.innerText = "✅ Gambar terkirim. Memproses hadiah...";
 
- let { data } =
- await db.from("users")
- .select("*")
- .eq("username",loggedUser);
+    // 2. Simpan History ke Supabase (beserta link buktinya)
+    let { error: historyError } = await db.from("task_done").insert([
+      { username: loggedUser, campaign_id: campaignId, proof_url: proofUrl }
+    ]);
 
- let coin = data[0].coin+1;
+    if(historyError) throw historyError;
 
- await db.from("users")
- .update({
-   coin:coin
- })
- .eq("username",loggedUser);
+    // 3. Tambah Koin User
+    let { data: userData } = await db.from("users").select("coin").eq("username", loggedUser);
+    let newCoin = userData[0].coin + 1;
+    await db.from("users").update({ coin: newCoin }).eq("username", loggedUser);
+    document.getElementById("coinShow").innerText = newCoin;
 
- document.getElementById("coinShow")
- .innerText = coin;
+    // 4. Kurangi Target Campaign
+    let { data: campaignData } = await db.from("campaigns").select("target").eq("id", campaignId);
+    let newTarget = campaignData[0].target - 1;
 
+    if(newTarget <= 0) {
+      await db.from("campaigns").delete().eq("id", campaignId);
+    } else {
+      await db.from("campaigns").update({ target: newTarget }).eq("id", campaignId);
+    }
 
- /* update campaign */
+    alert("Berhasil! Bukti terkirim dan koin bertambah.");
+    loadTasks(); // Refresh daftar task
 
- let { data:campaign } =
- await db.from("campaigns")
- .select("*")
- .eq("id",campaignId);
-
- let newTarget =
- campaign[0].target - 1;
-
-
- if(newTarget<=0){
-
-   await db.from("campaigns")
-   .delete()
-   .eq("id",campaignId);
-
- } else {
-
-   await db.from("campaigns")
-   .update({
-     target:newTarget
-   })
-   .eq("id",campaignId);
-
- }
-
- alert("Berhasil +1 coin");
-
- loadTasks();
+  } catch (error) {
+    statusTxt.innerText = "❌ Terjadi kesalahan: " + error.message;
+    statusTxt.style.color = "#ef4444";
+    btnSubmit.disabled = false;
+  }
 }
-
 </script>
 
 </body>

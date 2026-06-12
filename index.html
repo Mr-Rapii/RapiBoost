@@ -80,9 +80,7 @@ input,button{
 <input id="targetInput" placeholder="Jumlah followers">
 
 <button onclick="createCampaign()">
-
 Submit Campaign
-
 </button>
 
 <hr>
@@ -112,10 +110,7 @@ let loggedUser="";
 
 
 function makeRef(){
-
- return "REF" +
- Math.floor(Math.random()*99999);
-
+ return "REF" + Math.floor(Math.random()*99999);
 }
 
 
@@ -128,9 +123,9 @@ async function registerUser(){
  let referral =
  document.getElementById("referral").value;
 
- let myRef=makeRef();
+ let myRef = makeRef();
 
- let { error }=
+ let { error } =
  await db.from("users").insert([
    {
      username:username,
@@ -141,35 +136,33 @@ async function registerUser(){
  ]);
 
  if(error){
-
-   document.getElementById("status").innerText=
+   document.getElementById("status").innerText =
    error.message;
-
    return;
  }
 
  if(referral){
 
-   let { data }=
+   let { data } =
    await db.from("users")
    .select("*")
-   .eq("refcode",referral);
+   .eq("refcode", referral);
 
    if(data.length>0){
 
-     let oldCoin=data[0].coin;
+     let oldCoin = data[0].coin;
 
      await db.from("users")
      .update({
-       coin:oldCoin+5
+       coin: oldCoin+5
      })
-     .eq("refcode",referral);
+     .eq("refcode", referral);
 
    }
 
  }
 
- document.getElementById("status").innerText=
+ document.getElementById("status").innerText =
  "Register berhasil";
 }
 
@@ -180,20 +173,20 @@ async function loginUser(){
  let username =
  document.getElementById("username").value;
 
- let { data }=
+ let { data } =
  await db.from("users")
  .select("*")
- .eq("username",username);
+ .eq("username", username);
 
  if(data.length==0){
 
-   document.getElementById("status").innerText=
+   document.getElementById("status").innerText =
    "User tidak ditemukan";
 
    return;
  }
 
- loggedUser=username;
+ loggedUser = username;
 
  document.getElementById("loginBox")
  .style.display="none";
@@ -202,13 +195,13 @@ async function loginUser(){
  .style.display="block";
 
  document.getElementById("currentUser")
- .innerText=username;
+ .innerText = username;
 
  document.getElementById("coinShow")
- .innerText=data[0].coin;
+ .innerText = data[0].coin;
 
  document.getElementById("myRef")
- .innerText=data[0].refcode;
+ .innerText = data[0].refcode;
 
  loadTasks();
 }
@@ -217,10 +210,10 @@ async function loginUser(){
 /* CREATE CAMPAIGN */
 async function createCampaign(){
 
- let account=
+ let account =
  document.getElementById("accountInput").value;
 
- let target=
+ let target =
  parseInt(
  document.getElementById("targetInput").value
  );
@@ -242,7 +235,7 @@ async function createCampaign(){
 /* LOAD TASK */
 async function loadTasks(){
 
- let { data }=
+ let { data } =
  await db.from("campaigns")
  .select("*");
 
@@ -252,9 +245,7 @@ async function loadTasks(){
 
    if(item.username!=loggedUser){
 
-     /* cek apakah user sudah kerjakan */
-
-     let { data:done }=
+     let { data:done } =
      await db.from("task_done")
      .select("*")
      .eq("username",loggedUser)
@@ -262,16 +253,16 @@ async function loadTasks(){
 
      if(done.length>0){
 
-       html+=`
+       html += `
 
        <div class="task">
 
        <p>Follow ${item.account}</p>
 
+       <p>Sisa Target: ${item.target}</p>
+
        <button disabled>
-
        Sudah Dikerjakan
-
        </button>
 
        </div>
@@ -280,17 +271,16 @@ async function loadTasks(){
 
      } else {
 
-       html+=`
+       html += `
 
        <div class="task">
 
        <p>Follow ${item.account}</p>
 
-       <button
-       onclick="doTask(${item.id})">
+       <p>Sisa Target: ${item.target}</p>
 
+       <button onclick="doTask(${item.id})">
        Sudah Follow (+1 Coin)
-
        </button>
 
        </div>
@@ -303,29 +293,25 @@ async function loadTasks(){
  }
 
  document.getElementById("taskList")
- .innerHTML=html;
+ .innerHTML = html;
 }
 
 
 /* KERJAKAN TASK */
 async function doTask(campaignId){
 
- /* cek lagi */
-
- let { data:done }=
+ let { data:done } =
  await db.from("task_done")
  .select("*")
  .eq("username",loggedUser)
  .eq("campaign_id",campaignId);
 
  if(done.length>0){
-
    alert("Task sudah pernah dikerjakan");
-
    return;
  }
 
- /* simpan task_done */
+ /* simpan history */
 
  await db.from("task_done").insert([
    {
@@ -336,12 +322,12 @@ async function doTask(campaignId){
 
  /* tambah coin */
 
- let { data }=
+ let { data } =
  await db.from("users")
  .select("*")
  .eq("username",loggedUser);
 
- let coin=data[0].coin+1;
+ let coin = data[0].coin+1;
 
  await db.from("users")
  .update({
@@ -350,7 +336,35 @@ async function doTask(campaignId){
  .eq("username",loggedUser);
 
  document.getElementById("coinShow")
- .innerText=coin;
+ .innerText = coin;
+
+
+ /* update campaign */
+
+ let { data:campaign } =
+ await db.from("campaigns")
+ .select("*")
+ .eq("id",campaignId);
+
+ let newTarget =
+ campaign[0].target - 1;
+
+
+ if(newTarget<=0){
+
+   await db.from("campaigns")
+   .delete()
+   .eq("id",campaignId);
+
+ } else {
+
+   await db.from("campaigns")
+   .update({
+     target:newTarget
+   })
+   .eq("id",campaignId);
+
+ }
 
  alert("Berhasil +1 coin");
 

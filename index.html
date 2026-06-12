@@ -1,96 +1,136 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RaffiBoost</title>
+<title>RaffiBoost</title>
 
-  <style>
-    body{
-      background:#0f172a;
-      color:white;
-      font-family:Arial;
-      text-align:center;
-      margin:0;
-      padding:40px;
-    }
+<style>
+body{
+ background:#0f172a;
+ color:white;
+ font-family:Arial;
+ text-align:center;
+ padding:30px;
+}
 
-    .box{
-      background:#1e293b;
-      max-width:350px;
-      margin:auto;
-      padding:20px;
-      border-radius:12px;
-    }
+.box{
+ background:#1e293b;
+ padding:20px;
+ border-radius:10px;
+ max-width:400px;
+ margin:auto;
+}
 
-    input{
-      width:90%;
-      padding:10px;
-      margin:8px 0;
-      border:none;
-      border-radius:8px;
-    }
+input,button{
+ width:90%;
+ padding:10px;
+ margin:8px;
+ border:none;
+ border-radius:8px;
+}
 
-    button{
-      width:95%;
-      padding:10px;
-      margin-top:10px;
-      border:none;
-      border-radius:8px;
-      cursor:pointer;
-    }
-
-    #status{
-      margin-top:15px;
-      color:lightgreen;
-    }
-  </style>
+.task{
+ background:#334155;
+ padding:10px;
+ margin-top:15px;
+ border-radius:10px;
+}
+</style>
 </head>
 
 <body>
 
-  <h1>🚀 RaffiBoost</h1>
-  <p>Grow akunmu dengan sistem koin</p>
+<div id="loginPage">
 
-  <div class="box">
-    <input id="username" placeholder="Username">
-    <input id="password" type="password" placeholder="Password">
+<h1>🚀 RaffiBoost</h1>
 
-    <button onclick="register()">Register</button>
-    <button onclick="login()">Login</button>
+<div class="box">
+<input id="username" placeholder="Username">
 
-    <p id="status"></p>
-  </div>
+<button onclick="register()">Register</button>
+<button onclick="login()">Login</button>
+
+<p id="status"></p>
+</div>
+
+</div>
+
+
+<div id="dashboard" style="display:none;">
+
+<h1>Dashboard</h1>
+
+<p>👤 User: <span id="userShow"></span></p>
+
+<p>🪙 Coin: <span id="coinShow"></span></p>
+
+<div class="task">
+<h3>Task #1</h3>
+
+<p>Follow akun @contoh_account</p>
+
+<button onclick="doneTask()">Sudah Follow (+1 coin)</button>
+</div>
+
+<br>
+
+<button onclick="logout()">Logout</button>
+
+</div>
+
 
 <script>
+
 function register(){
-  let user=document.getElementById("username").value;
+ let user=document.getElementById("username").value;
 
-  if(user==""){
-    document.getElementById("status").innerText="Isi username dulu";
-    return;
-  }
+ if(user=="") return;
 
-  localStorage.setItem("user",user);
-  localStorage.setItem("coin",1);
+ localStorage.setItem("user",user);
+ localStorage.setItem("coin",1);
 
-  document.getElementById("status").innerText=
-  "Akun dibuat. Kamu dapat 1 coin";
+ document.getElementById("status").innerText=
+ "Akun dibuat | Coin awal 1";
 }
 
 function login(){
-  let saved=localStorage.getItem("user");
+ let user=localStorage.getItem("user");
 
-  if(saved){
-    let coin=localStorage.getItem("coin");
+ if(!user){
+  document.getElementById("status").innerText=
+  "Daftar dulu";
+  return;
+ }
 
-    document.getElementById("status").innerText=
-    "Login berhasil | Coin: "+coin;
-  } else {
-    document.getElementById("status").innerText=
-    "Belum punya akun";
-  }
+ openDashboard();
 }
+
+function openDashboard(){
+ let user=localStorage.getItem("user");
+ let coin=localStorage.getItem("coin");
+
+ document.getElementById("loginPage").style.display="none";
+ document.getElementById("dashboard").style.display="block";
+
+ document.getElementById("userShow").innerText=user;
+ document.getElementById("coinShow").innerText=coin;
+}
+
+function doneTask(){
+ let coin=parseInt(localStorage.getItem("coin"));
+
+ coin=coin+1;
+
+ localStorage.setItem("coin",coin);
+
+ document.getElementById("coinShow").innerText=coin;
+
+ alert("Berhasil! +1 coin");
+}
+
+function logout(){
+ location.reload();
+}
+
 </script>
 
 </body>

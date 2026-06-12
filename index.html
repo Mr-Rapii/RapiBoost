@@ -1,60 +1,76 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RaffiBoost</title>
 
 <style>
 body{
- background:#0f172a;
- color:white;
- font-family:Arial;
- text-align:center;
- padding:30px;
+  background:#0f172a;
+  color:white;
+  font-family:Arial;
+  text-align:center;
+  padding:20px;
 }
 
 .box{
- background:#1e293b;
- padding:20px;
- border-radius:10px;
- max-width:400px;
- margin:auto;
+  background:#1e293b;
+  padding:20px;
+  border-radius:12px;
+  max-width:400px;
+  margin:auto;
 }
 
 input,button{
- width:90%;
- padding:10px;
- margin:8px;
- border:none;
- border-radius:8px;
+  width:90%;
+  padding:12px;
+  margin:8px;
+  border:none;
+  border-radius:8px;
+}
+
+button{
+  cursor:pointer;
 }
 
 .task{
- background:#334155;
- padding:10px;
- margin-top:15px;
- border-radius:10px;
+  background:#334155;
+  padding:15px;
+  margin-top:15px;
+  border-radius:10px;
+}
+
+hr{
+  margin:20px;
 }
 </style>
 </head>
 
 <body>
 
+<!-- LOGIN PAGE -->
 <div id="loginPage">
 
 <h1>🚀 RaffiBoost</h1>
+<p>Grow akunmu dengan sistem coin</p>
 
 <div class="box">
-<input id="username" placeholder="Username">
+
+<input id="username" placeholder="Masukkan Username">
 
 <button onclick="register()">Register</button>
+
 <button onclick="login()">Login</button>
 
 <p id="status"></p>
-</div>
 
 </div>
 
+</div>
 
+
+<!-- DASHBOARD -->
 <div id="dashboard" style="display:none;">
 
 <h1>Dashboard</h1>
@@ -63,13 +79,27 @@ input,button{
 
 <p>🪙 Coin: <span id="coinShow"></span></p>
 
-<div class="task">
-<h3>Task #1</h3>
+<hr>
 
-<p>Follow akun @contoh_account</p>
+<h2>Buat Campaign</h2>
 
-<button onclick="doneTask()">Sudah Follow (+1 coin)</button>
-</div>
+<input id="accountName"
+placeholder="Masukkan username akun (@contoh)">
+
+<input id="targetFollowers"
+placeholder="Jumlah followers">
+
+<button onclick="createCampaign()">
+Submit Campaign
+</button>
+
+<p id="campaignStatus"></p>
+
+<hr>
+
+<h2>Task Tersedia</h2>
+
+<div id="taskList"></div>
 
 <br>
 
@@ -80,43 +110,158 @@ input,button{
 
 <script>
 
+/* REGISTER */
 function register(){
+
  let user=document.getElementById("username").value;
 
- if(user=="") return;
+ if(user==""){
+   document.getElementById("status").innerText=
+   "Isi username dulu";
+   return;
+ }
 
  localStorage.setItem("user",user);
+
  localStorage.setItem("coin",1);
 
  document.getElementById("status").innerText=
- "Akun dibuat | Coin awal 1";
+ "Akun berhasil dibuat | Coin awal 1";
 }
 
+
+/* LOGIN */
 function login(){
+
  let user=localStorage.getItem("user");
 
  if(!user){
-  document.getElementById("status").innerText=
-  "Daftar dulu";
-  return;
+
+   document.getElementById("status").innerText=
+   "Belum punya akun";
+
+   return;
  }
 
  openDashboard();
 }
 
+
+/* OPEN DASHBOARD */
 function openDashboard(){
+
  let user=localStorage.getItem("user");
+
  let coin=localStorage.getItem("coin");
 
  document.getElementById("loginPage").style.display="none";
+
  document.getElementById("dashboard").style.display="block";
 
  document.getElementById("userShow").innerText=user;
+
  document.getElementById("coinShow").innerText=coin;
+
+ loadTask();
 }
 
-function doneTask(){
+
+/* BUAT CAMPAIGN */
+function createCampaign(){
+
+ let account=document.getElementById("accountName").value;
+
+ let target=parseInt(
+ document.getElementById("targetFollowers").value
+ );
+
  let coin=parseInt(localStorage.getItem("coin"));
+
+ if(!account || !target){
+
+   document.getElementById("campaignStatus").innerText=
+   "Isi semua data";
+
+   return;
+ }
+
+ if(coin<target){
+
+   document.getElementById("campaignStatus").innerText=
+   "Coin tidak cukup";
+
+   return;
+ }
+
+ coin=coin-target;
+
+ localStorage.setItem("coin",coin);
+
+ let campaign={
+
+   account:account,
+
+   target:target
+
+ };
+
+ localStorage.setItem(
+ "campaign",
+ JSON.stringify(campaign)
+ );
+
+ document.getElementById("coinShow").innerText=coin;
+
+ document.getElementById("campaignStatus").innerText=
+ "Campaign berhasil dibuat";
+
+ loadTask();
+}
+
+
+/* LOAD TASK */
+function loadTask(){
+
+ let data=localStorage.getItem("campaign");
+
+ if(!data){
+
+   document.getElementById("taskList").innerHTML=
+   "Belum ada task";
+
+   return;
+ }
+
+ let campaign=JSON.parse(data);
+
+ document.getElementById("taskList").innerHTML=`
+
+ <div class="task">
+
+ <p>📌 Follow akun:</p>
+
+ <h3>${campaign.account}</h3>
+
+ <p>Reward: +1 Coin</p>
+
+ <button onclick="finishTask()">
+
+ Sudah Follow
+
+ </button>
+
+ </div>
+
+ `;
+}
+
+
+/* KERJAKAN TASK */
+function finishTask(){
+
+ let coin=parseInt(
+ localStorage.getItem("coin")
+ );
 
  coin=coin+1;
 
@@ -124,10 +269,13 @@ function doneTask(){
 
  document.getElementById("coinShow").innerText=coin;
 
- alert("Berhasil! +1 coin");
+ alert("Berhasil! Kamu mendapat +1 coin");
 }
 
+
+/* LOGOUT */
 function logout(){
+
  location.reload();
 }
 

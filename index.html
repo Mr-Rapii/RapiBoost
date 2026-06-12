@@ -69,13 +69,13 @@ input,button{
 
 <p>🪙 Coin: <span id="coinShow"></span></p>
 
-<p>🎁 Kode Referral: <span id="myRef"></span></p>
+<p>🎁 Referral: <span id="myRef"></span></p>
 
 <hr>
 
 <h3>Buat Campaign</h3>
 
-<input id="accountInput" placeholder="@username target">
+<input id="accountInput" placeholder="@username">
 
 <input id="targetInput" placeholder="Jumlah followers">
 
@@ -111,7 +111,6 @@ SUPABASE_KEY
 let loggedUser="";
 
 
-/* BUAT KODE REF */
 function makeRef(){
 
  return "REF" +
@@ -129,11 +128,9 @@ async function registerUser(){
  let referral =
  document.getElementById("referral").value;
 
- let myRef = makeRef();
+ let myRef=makeRef();
 
-
- /* simpan user baru */
- let { error } =
+ let { error }=
  await db.from("users").insert([
    {
      username:username,
@@ -143,7 +140,6 @@ async function registerUser(){
    }
  ]);
 
-
  if(error){
 
    document.getElementById("status").innerText=
@@ -152,23 +148,20 @@ async function registerUser(){
    return;
  }
 
-
- /* cek referral */
  if(referral){
 
-   let { data } =
+   let { data }=
    await db.from("users")
    .select("*")
    .eq("refcode",referral);
 
    if(data.length>0){
 
-     let oldCoin =
-     data[0].coin;
+     let oldCoin=data[0].coin;
 
      await db.from("users")
      .update({
-       coin: oldCoin+5
+       coin:oldCoin+5
      })
      .eq("refcode",referral);
 
@@ -176,10 +169,8 @@ async function registerUser(){
 
  }
 
-
  document.getElementById("status").innerText=
  "Register berhasil";
-
 }
 
 
@@ -189,7 +180,7 @@ async function loginUser(){
  let username =
  document.getElementById("username").value;
 
- let { data } =
+ let { data }=
  await db.from("users")
  .select("*")
  .eq("username",username);
@@ -220,7 +211,6 @@ async function loginUser(){
  .innerText=data[0].refcode;
 
  loadTasks();
-
 }
 
 
@@ -252,42 +242,99 @@ async function createCampaign(){
 /* LOAD TASK */
 async function loadTasks(){
 
- let { data } =
+ let { data }=
  await db.from("campaigns")
  .select("*");
 
  let html="";
 
- data.forEach(item=>{
+ for(let item of data){
 
    if(item.username!=loggedUser){
 
-     html+=`
+     /* cek apakah user sudah kerjakan */
 
-     <div class="task">
+     let { data:done }=
+     await db.from("task_done")
+     .select("*")
+     .eq("username",loggedUser)
+     .eq("campaign_id",item.id);
 
-     <p>Follow ${item.account}</p>
+     if(done.length>0){
 
-     <button onclick="doTask()">
+       html+=`
 
-     Sudah Follow (+1 Coin)
+       <div class="task">
 
-     </button>
+       <p>Follow ${item.account}</p>
 
-     </div>
+       <button disabled>
 
-     `;
+       Sudah Dikerjakan
+
+       </button>
+
+       </div>
+
+       `;
+
+     } else {
+
+       html+=`
+
+       <div class="task">
+
+       <p>Follow ${item.account}</p>
+
+       <button
+       onclick="doTask(${item.id})">
+
+       Sudah Follow (+1 Coin)
+
+       </button>
+
+       </div>
+
+       `;
+     }
+
    }
 
- });
+ }
 
  document.getElementById("taskList")
  .innerHTML=html;
 }
 
 
-/* TASK */
-async function doTask(){
+/* KERJAKAN TASK */
+async function doTask(campaignId){
+
+ /* cek lagi */
+
+ let { data:done }=
+ await db.from("task_done")
+ .select("*")
+ .eq("username",loggedUser)
+ .eq("campaign_id",campaignId);
+
+ if(done.length>0){
+
+   alert("Task sudah pernah dikerjakan");
+
+   return;
+ }
+
+ /* simpan task_done */
+
+ await db.from("task_done").insert([
+   {
+     username:loggedUser,
+     campaign_id:campaignId
+   }
+ ]);
+
+ /* tambah coin */
 
  let { data }=
  await db.from("users")
@@ -297,14 +344,17 @@ async function doTask(){
  let coin=data[0].coin+1;
 
  await db.from("users")
- .update({coin:coin})
+ .update({
+   coin:coin
+ })
  .eq("username",loggedUser);
 
  document.getElementById("coinShow")
  .innerText=coin;
 
- alert("Coin +1");
+ alert("Berhasil +1 coin");
 
+ loadTasks();
 }
 
 </script>

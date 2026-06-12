@@ -1,12 +1,97 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-<title>RaffiBoost</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RaffiBoost</title>
+
+  <style>
+    body{
+      background:#0f172a;
+      color:white;
+      font-family:Arial;
+      text-align:center;
+      margin:0;
+      padding:40px;
+    }
+
+    .box{
+      background:#1e293b;
+      max-width:350px;
+      margin:auto;
+      padding:20px;
+      border-radius:12px;
+    }
+
+    input{
+      width:90%;
+      padding:10px;
+      margin:8px 0;
+      border:none;
+      border-radius:8px;
+    }
+
+    button{
+      width:95%;
+      padding:10px;
+      margin-top:10px;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+    }
+
+    #status{
+      margin-top:15px;
+      color:lightgreen;
+    }
+  </style>
 </head>
+
 <body>
 
-<h1>Selamat Datang di RaffiBoost</h1>
-<p>Website exchange followers dengan sistem koin</p>
+  <h1>🚀 RaffiBoost</h1>
+  <p>Grow akunmu dengan sistem koin</p>
+
+  <div class="box">
+    <input id="username" placeholder="Username">
+    <input id="password" type="password" placeholder="Password">
+
+    <button onclick="register()">Register</button>
+    <button onclick="login()">Login</button>
+
+    <p id="status"></p>
+  </div>
+
+<script>
+function register(){
+  let user=document.getElementById("username").value;
+
+  if(user==""){
+    document.getElementById("status").innerText="Isi username dulu";
+    return;
+  }
+
+  localStorage.setItem("user",user);
+  localStorage.setItem("coin",1);
+
+  document.getElementById("status").innerText=
+  "Akun dibuat. Kamu dapat 1 coin";
+}
+
+function login(){
+  let saved=localStorage.getItem("user");
+
+  if(saved){
+    let coin=localStorage.getItem("coin");
+
+    document.getElementById("status").innerText=
+    "Login berhasil | Coin: "+coin;
+  } else {
+    document.getElementById("status").innerText=
+    "Belum punya akun";
+  }
+}
+</script>
 
 </body>
 </html>

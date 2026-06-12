@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RaffiBoost</title>
+<title>RapiBoost</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -42,13 +42,16 @@ input,button{
 
 <div id="loginBox">
 
-<h1>🚀 RaffiBoost</h1>
+<h1>🚀 RapiBoost</h1>
 
 <div class="box">
 
-<input id="username" placeholder="Masukkan Username">
+<input id="username" placeholder="Username">
+
+<input id="referral" placeholder="Kode referral (opsional)">
 
 <button onclick="registerUser()">Register</button>
+
 <button onclick="loginUser()">Login</button>
 
 <p id="status"></p>
@@ -66,15 +69,15 @@ input,button{
 
 <p>🪙 Coin: <span id="coinShow"></span></p>
 
+<p>🎁 Kode Referral: <span id="myRef"></span></p>
+
 <hr>
 
 <h3>Buat Campaign</h3>
 
-<input id="accountInput"
-placeholder="@username target">
+<input id="accountInput" placeholder="@username target">
 
-<input id="targetInput"
-placeholder="Jumlah followers">
+<input id="targetInput" placeholder="Jumlah followers">
 
 <button onclick="createCampaign()">
 
@@ -86,11 +89,7 @@ Submit Campaign
 
 <h3>Task Tersedia</h3>
 
-<div id="taskList">
-
-Loading...
-
-</div>
+<div id="taskList"></div>
 
 </div>
 
@@ -112,30 +111,75 @@ SUPABASE_KEY
 let loggedUser="";
 
 
+/* BUAT KODE REF */
+function makeRef(){
+
+ return "REF" +
+ Math.floor(Math.random()*99999);
+
+}
+
+
 /* REGISTER */
 async function registerUser(){
 
  let username =
  document.getElementById("username").value;
 
+ let referral =
+ document.getElementById("referral").value;
+
+ let myRef = makeRef();
+
+
+ /* simpan user baru */
  let { error } =
  await db.from("users").insert([
    {
      username:username,
-     coin:1
+     coin:1,
+     refcode:myRef,
+     referred_by:referral || null
    }
  ]);
+
 
  if(error){
 
    document.getElementById("status").innerText=
    error.message;
 
- }else{
-
-   document.getElementById("status").innerText=
-   "Register berhasil";
+   return;
  }
+
+
+ /* cek referral */
+ if(referral){
+
+   let { data } =
+   await db.from("users")
+   .select("*")
+   .eq("refcode",referral);
+
+   if(data.length>0){
+
+     let oldCoin =
+     data[0].coin;
+
+     await db.from("users")
+     .update({
+       coin: oldCoin+5
+     })
+     .eq("refcode",referral);
+
+   }
+
+ }
+
+
+ document.getElementById("status").innerText=
+ "Register berhasil";
+
 }
 
 
@@ -172,7 +216,11 @@ async function loginUser(){
  document.getElementById("coinShow")
  .innerText=data[0].coin;
 
+ document.getElementById("myRef")
+ .innerText=data[0].refcode;
+
  loadTasks();
+
 }
 
 
@@ -220,8 +268,7 @@ async function loadTasks(){
 
      <p>Follow ${item.account}</p>
 
-     <button
-     onclick="doTask()">
+     <button onclick="doTask()">
 
      Sudah Follow (+1 Coin)
 
@@ -239,7 +286,7 @@ async function loadTasks(){
 }
 
 
-/* KERJAKAN TASK */
+/* TASK */
 async function doTask(){
 
  let { data }=
@@ -256,7 +303,8 @@ async function doTask(){
  document.getElementById("coinShow")
  .innerText=coin;
 
- alert("Coin bertambah +1");
+ alert("Coin +1");
+
 }
 
 </script>

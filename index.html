@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RaffiBoost</title>
+<title>RapiBoost</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 body{
@@ -13,7 +15,6 @@ body{
   text-align:center;
   padding:20px;
 }
-
 .box{
   background:#1e293b;
   padding:20px;
@@ -21,7 +22,6 @@ body{
   max-width:400px;
   margin:auto;
 }
-
 input,button{
   width:90%;
   padding:12px;
@@ -29,254 +29,101 @@ input,button{
   border:none;
   border-radius:8px;
 }
-
-button{
-  cursor:pointer;
-}
-
-.task{
-  background:#334155;
-  padding:15px;
-  margin-top:15px;
-  border-radius:10px;
-}
-
-hr{
-  margin:20px;
-}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN PAGE -->
-<div id="loginPage">
-
-<h1>🚀 RaffiBoost</h1>
-<p>Grow akunmu dengan sistem coin</p>
+<h1>🚀 RapiBoost</h1>
 
 <div class="box">
 
 <input id="username" placeholder="Masukkan Username">
 
-<button onclick="register()">Register</button>
+<button onclick="registerUser()">Register</button>
 
-<button onclick="login()">Login</button>
+<button onclick="checkUser()">Login</button>
 
 <p id="status"></p>
 
 </div>
 
-</div>
-
-
-<!-- DASHBOARD -->
-<div id="dashboard" style="display:none;">
-
-<h1>Dashboard</h1>
-
-<p>👤 User: <span id="userShow"></span></p>
-
-<p>🪙 Coin: <span id="coinShow"></span></p>
-
-<hr>
-
-<h2>Buat Campaign</h2>
-
-<input id="accountName"
-placeholder="Masukkan username akun (@contoh)">
-
-<input id="targetFollowers"
-placeholder="Jumlah followers">
-
-<button onclick="createCampaign()">
-Submit Campaign
-</button>
-
-<p id="campaignStatus"></p>
-
-<hr>
-
-<h2>Task Tersedia</h2>
-
-<div id="taskList"></div>
-
-<br>
-
-<button onclick="logout()">Logout</button>
-
-</div>
-
-
 <script>
 
+/* GANTI DENGAN DATA KAMU */
+const SUPABASE_URL =
+"https://kbjevwmihxlgcarhyvje.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_aFgPoAkjq2aY_mwk94hQqw_cP5iYb7D";
+
+const db = supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
+
+
 /* REGISTER */
-function register(){
+async function registerUser(){
 
- let user=document.getElementById("username").value;
+ let username =
+ document.getElementById("username").value;
 
- if(user==""){
-   document.getElementById("status").innerText=
-   "Isi username dulu";
+ if(!username){
+   alert("Isi username");
    return;
  }
 
- localStorage.setItem("user",user);
+ let { error } =
+ await db.from("users").insert([
+   {
+     username: username,
+     coin: 1
+   }
+ ]);
 
- localStorage.setItem("coin",1);
+ if(error){
 
- document.getElementById("status").innerText=
- "Akun berhasil dibuat | Coin awal 1";
+   document.getElementById("status").innerText =
+   "Error: " + error.message;
+
+ } else {
+
+   document.getElementById("status").innerText =
+   "Register berhasil, coin awal 1";
+ }
 }
 
 
 /* LOGIN */
-function login(){
+async function checkUser(){
 
- let user=localStorage.getItem("user");
+ let username =
+ document.getElementById("username").value;
 
- if(!user){
+ let { data, error } =
+ await db.from("users")
+ .select("*")
+ .eq("username", username);
 
-   document.getElementById("status").innerText=
-   "Belum punya akun";
+ if(error){
 
-   return;
- }
-
- openDashboard();
-}
-
-
-/* OPEN DASHBOARD */
-function openDashboard(){
-
- let user=localStorage.getItem("user");
-
- let coin=localStorage.getItem("coin");
-
- document.getElementById("loginPage").style.display="none";
-
- document.getElementById("dashboard").style.display="block";
-
- document.getElementById("userShow").innerText=user;
-
- document.getElementById("coinShow").innerText=coin;
-
- loadTask();
-}
-
-
-/* BUAT CAMPAIGN */
-function createCampaign(){
-
- let account=document.getElementById("accountName").value;
-
- let target=parseInt(
- document.getElementById("targetFollowers").value
- );
-
- let coin=parseInt(localStorage.getItem("coin"));
-
- if(!account || !target){
-
-   document.getElementById("campaignStatus").innerText=
-   "Isi semua data";
+   document.getElementById("status").innerText =
+   "Error login";
 
    return;
  }
 
- if(coin<target){
+ if(data.length==0){
 
-   document.getElementById("campaignStatus").innerText=
-   "Coin tidak cukup";
+   document.getElementById("status").innerText =
+   "User tidak ditemukan";
 
-   return;
+ } else {
+
+   document.getElementById("status").innerText =
+   "Login berhasil | Coin: " + data[0].coin;
  }
-
- coin=coin-target;
-
- localStorage.setItem("coin",coin);
-
- let campaign={
-
-   account:account,
-
-   target:target
-
- };
-
- localStorage.setItem(
- "campaign",
- JSON.stringify(campaign)
- );
-
- document.getElementById("coinShow").innerText=coin;
-
- document.getElementById("campaignStatus").innerText=
- "Campaign berhasil dibuat";
-
- loadTask();
-}
-
-
-/* LOAD TASK */
-function loadTask(){
-
- let data=localStorage.getItem("campaign");
-
- if(!data){
-
-   document.getElementById("taskList").innerHTML=
-   "Belum ada task";
-
-   return;
- }
-
- let campaign=JSON.parse(data);
-
- document.getElementById("taskList").innerHTML=`
-
- <div class="task">
-
- <p>📌 Follow akun:</p>
-
- <h3>${campaign.account}</h3>
-
- <p>Reward: +1 Coin</p>
-
- <button onclick="finishTask()">
-
- Sudah Follow
-
- </button>
-
- </div>
-
- `;
-}
-
-
-/* KERJAKAN TASK */
-function finishTask(){
-
- let coin=parseInt(
- localStorage.getItem("coin")
- );
-
- coin=coin+1;
-
- localStorage.setItem("coin",coin);
-
- document.getElementById("coinShow").innerText=coin;
-
- alert("Berhasil! Kamu mendapat +1 coin");
-}
-
-
-/* LOGOUT */
-function logout(){
-
- location.reload();
 }
 
 </script>
